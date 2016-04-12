@@ -131,6 +131,7 @@
     var imgcontainer = document.getElementById('img-container')
     var img = document.getElementById('phantom-image')
 
+    var worker = new Worker('style-worker.js')
     var reader = new FileReader()
 
     // File Input Event
@@ -160,7 +161,7 @@
         ctx.drawImage(this, 0, 0)
         imgData = ctx.getImageData(0,0, canvas.width, canvas.height)
 
-        // Clear the DOM
+        // Clear DOM
         css.innerHTML = ''
         img.innerHTML = ''
         preview.innerHTML = ''
@@ -173,22 +174,25 @@
         // Set Step 3 to be "Loading..."
         css.innerHTML = '<h2>Loading...</h2>'
 
-        // Start Web Worker
-        var worker = new Worker('style-worker.js')
+        // Send message to Worker
         worker.postMessage(imgData, [imgData.data.buffer])
 
         // Wait for web worker to be done working
         worker.onmessage = function (message) {
+          var baseCss = 'width:1px; height:1px; box-shadow:'
+          var boxShadowData = message.data.join(',')
 
           // Add step 3 instruction
           css.innerHTML = '<h2>3. Download this CSS & include in your HTML</h2>'
 
           // Create CSS File Blob
-          var cssdata = new Blob(['#phantom-image {'+message.data+'}'], {type: 'application/css-stylesheet'})
-          // Check if css file way made previously & remove
+          var cssdata = new Blob(['#phantom-image {' + baseCss + boxShadowData + ';}'], {type: 'application/css-stylesheet'})
+
+          // Check if css file was made previously & remove
           if (cssFile !== null) {
             window.URL.revokeObjectURL(cssFile)
           }
+
           // Create URL for the Blob
           cssFile = window.URL.createObjectURL(cssdata);
 
@@ -201,17 +205,14 @@
 
           // Create Preview
           // If inline CSS is too long, it'll slow the browser so abort
-          if (message.data.length < 8000000) {
-            preview.innerHTML ='<h3>Here is a preview (view source & hunt the ghost)</h3>'
-            imgcontainer.style.width= image.width+'px'
-            imgcontainer.style.height= image.height+'px'
-            img.innerHTML='<div style="'+message.data+'"></div>'
+          if (boxShadowData.length < 8000000) {
+            preview.innerHTML = '<h3>Here is a preview (view source & hunt the ghost)</h3>'
+            imgcontainer.style.width = image.width + 'px'
+            imgcontainer.style.height = image.height + 'px'
+            img.innerHTML = '<div style="' + baseCss + boxShadowData + '"></div>'
           }else{
-            preview.innerHTML ='<h3>Oh No, ghost is too large. Preview is disabled.</h3>'
+            preview.innerHTML = '<h3>Oh No, ghost is too large. Preview is disabled.</h3>'
           }
-
-          // terminate the worker
-          worker.terminate()
         }
       }
     }
