@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+<link href='https://fonts.googleapis.com/css?family=Coming+Soon' rel='stylesheet' type='text/css'>
+<style type="text/css" media="screen">
+  * {
+    background-color: #FDF6E3;
+    font-family: "Coming Soon", "Comic Sans MS", cursive, sans-serif;
+  }
+  #container{
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  #header {
+    display: flex;
+    justify-content: center;
+    padding-top: 20px;
+  }
+  #header h1{
+    margin:0px;
+    font-size: 3.5em;
+    padding-left:20px;
+    text-shadow: 2px 2px #fff;
+  }
+  h2{
+    font-size: 1.6em;
+  }
+  h3{
+    font-size: 1.3em;
+  }
+  h4{
+    margin-bottom: 5px;
+    font-size: 1.2em;
+  }
+  p{
+    margin-top: 0px;
+  }
+  pre{
+    font-family: monospace;
+    font-size: 1.5em;
+    background-color: #EFEFEF;
+    padding:15px;
+    overflow: scroll;
+  }
+  a{
+    color:black;
+  }
+  #css a{
+    text-decoration: none;
+    background-color: #F46300;
+    padding:10px;
+    font-size: 1.2em;
+    color:#fff;
+    box-shadow: 1px 1px #bbb;
+  }
+
+  #css a:hover{
+    background-color: #FF6E0b;
+    cursor: pointer;
+  }
+
+  #preview{
+    padding-top: 30px;
+  }
+
+  #input {
+    width: 0px;
+    height: 0px;
+    opacity: 0;
+    overflow: hidden;
+    position: absolute;
+    z-index: -1;
+  }
+  #input + label {
+    font-size: 1em;
+    padding:5px;
+    color: white;
+    background-color: #777;
+    display: inline-block;
+    box-shadow: 1px 1px #555;
+  }
+  #input:focus + label,
+  #input + label:hover {
+    background-color: #999;
+  }
+  #input:focus + label {
+    outline: 1px dotted #000;
+    outline: -webkit-focus-ring-color auto 5px;
+  }
+
+</style>
+<head>
+  <title>Ghost Image</title>
+  <link rel='image_src' href='ghost-icon.png'/>
+  <link itemprop='image' href='ghost-icon.png' />
+  <meta property='og:title' content='Ghost Image' />
+  <meta property='og:type' content='website' />
+  <meta property='og:url' content='http://kosamari.github.io/Ghost-Image/' />
+   <meta property='og:description' content="Turn your image into 1x1px DIV element. You see it on screen but can't grab it like an image, literally Ghost." />
+  <meta property='og:image' content='http://kosamari.github.io/sweaterify/ghost-icon.png' />
+  <meta property='og:image:secure_url' content='https://kosamari.github.io/sweaterify/ghost-icon.png' />
+</head>
+<body>
+  <div id="container">
+    <header id="header">
+      <img src="ghost-icon.png" alt="logo image" height="65px">
+      <h1>Ghost Image</h1>
+    </header>
+    <h4>What is this ?</h4>
+    <p>This app use HTML5 Canvas to get color data from an image. The data collected is then transformed into chain of CSS box-shadow to create "ghost image" of 1x1px DIV element.
+    </p>
+    <p>Made by <a href="https://twitter.com/kosamari">@kosamari</a>. Code on <a href="https://github.com/kosamari/Ghost-Image">github</a>. Inspired by <a href="https://www.youtube.com/watch?v=mrxsD0mCpZ4">Vince Allen's talk</a>.
+    </p>
+    <h2>1. Choose an Image</h2>
+    <input type="file" name="file" id="input" accept="image/*">
+    <label for="input">Choose a file</label>
+    <div id="html"></div>
+    <div id="css"></div>
+    <div id="preview"></div>
+    <div id="img-container">
+      <div id="phantom-image"></div>
+    </div>
+  </div>
+
+  <script type="text/javascript">
+
+    // DOM ELEMENTS
+    var input = document.getElementById('input')
+    var html = document.getElementById('html')
+    var css = document.getElementById('css')
+    var imgcontainer = document.getElementById('img-container')
+    var img = document.getElementById('phantom-image')
+
+    var reader = new FileReader()
+
+    // File Input Event
+    // (This will trigger reader.onload event)
+    input.addEventListener('change', function(){
+      input.innerHTML = ''
+      reader.readAsDataURL(this.files[0])
+    }, false)
+
+    // When a file was loaded to FileReader
+    reader.onload = function() {
+
+      // Create new Image in memory for canvas to use
+      var image = new Image()
+      image.src = reader.result
+
+      // Wait for the Image to load
+      image.onload = function () {
+        var  style
+        var cssFile = null
+        // Setup Canvas & draw image onto it
+        var canvas = document.createElement('canvas')
+        var ctx = canvas.getContext('2d')
+        var imageData
+        canvas.width = this.width
+        canvas.height = this.height
+        ctx.drawImage(this, 0, 0)
+        imgData = ctx.getImageData(0,0, canvas.width, canvas.height)
+
+        // Clear the DOM
+        css.innerHTML = ''
+        img.innerHTML = ''
+        preview.innerHTML = ''
+        imgcontainer.style.width = '0px'
+        imgcontainer.style.height = '0px'
+
+        // Add Step 2 instruction
+        html.innerHTML = '<h2>2. Copy this line into your HTML</h2><pre>&lt;div id="phantom-image"&gt;&lt;/div&gt;'
+
+        // Set Step 3 to be "Loading..."
+        css.innerHTML = '<h2>Loading...</h2>'
+
+        // Start Web Worker
+        var worker = new Worker('style-worker.js')
+        worker.postMessage(imgData, [imgData.data.buffer])
+
+        // Wait for web worker to be done working
+        worker.onmessage = function (message) {
+
+          // Add step 3 instruction
+          css.innerHTML = '<h2>3. Download this CSS & include in your HTML</h2>'
+
+          // Create CSS File Blob
+          var cssdata = new Blob(['#phantom-image {'+message.data+'}'], {type: 'application/css-stylesheet'})
+          // Check if css file way made previously & remove
+          if (cssFile !== null) {
+            window.URL.revokeObjectURL(cssFile)
+          }
+          // Create URL for the Blob
+          cssFile = window.URL.createObjectURL(cssdata);
+
+          // Create Download button link & append to DOM
+          var a = document.createElement('a');
+          a.href = cssFile;
+          a.textContent = 'Download'
+          a.download = 'ghost-image.css'
+          css.appendChild(a)
+
+          // Create Preview
+          // If inline CSS is too long, it'll slow the browser so abort
+          if (message.data.length < 8000000) {
+            preview.innerHTML ='<h3>Here is a preview (view source & hunt the ghost)</h3>'
+            imgcontainer.style.width= image.width+'px'
+            imgcontainer.style.height= image.height+'px'
+            img.innerHTML='<div style="'+message.data+'"></div>'
+          }else{
+            preview.innerHTML ='<h3>Oh No, ghost is too large. Preview is disabled.</h3>'
+          }
+
+          // terminate the worker
+          worker.terminate()
+        }
+      }
+    }
+  </script>
+</body>
+</hmtl>
