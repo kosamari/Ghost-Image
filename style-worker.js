@@ -10,7 +10,7 @@ self.onmessage = function (message) {
       i = (x + y * width) * 4
       // skip if the pixel is competently transparent
       if (data[i + 3] !== 0) {
-        style.push(x + 'px ' + y + 'px ' + 'rgba(' + data[i] + ',' + data[i + 1] + ',' + data[i + 2] + ',' + data[i + 3] + ')')
+        style.push(x + 'px ' + y + 'px ' + 'rgba(' + data[i] + ',' + data[i + 1] + ',' + data[i + 2] + ',' + data[i + 3] / 255 + ')')
       }
     }
   }

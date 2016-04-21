@@ -45,6 +45,7 @@
   a{
     color:black;
   }
+
   #css a{
     text-decoration: none;
     background-color: #F46300;
@@ -118,7 +119,7 @@
     <div id="css"></div>
     <div id="preview"></div>
     <div id="img-container">
-      <div id="phantom-image"></div>
+      <div id="ghost-image"></div>
     </div>
   </div>
 
@@ -129,7 +130,7 @@
     var html = document.getElementById('html')
     var css = document.getElementById('css')
     var imgcontainer = document.getElementById('img-container')
-    var img = document.getElementById('phantom-image')
+    var img = document.getElementById('ghost-image')
 
     var worker = new Worker('style-worker.js')
     var reader = new FileReader()
@@ -169,7 +170,7 @@
         imgcontainer.style.height = '0px'
 
         // Add Step 2 instruction
-        html.innerHTML = '<h2>2. Copy this line into your HTML</h2><pre>&lt;div id="phantom-image"&gt;&lt;/div&gt;'
+        html.innerHTML = '<h2>2. Copy this line into your HTML</h2><pre>&lt;div id="ghost-image"&gt;&lt;/div&gt;'
 
         // Set Step 3 to be "Loading..."
         css.innerHTML = '<h2>Loading...</h2>'
@@ -186,7 +187,7 @@
           css.innerHTML = '<h2>3. Download this CSS & include in your HTML</h2>'
 
           // Create CSS File Blob
-          var cssdata = new Blob(['#phantom-image {' + baseCss + boxShadowData + ';}'], {type: 'application/css-stylesheet'})
+          var cssdata = new Blob(['#ghost-image {' + baseCss + boxShadowData + ';}'], {type: 'application/css-stylesheet'})
 
           // Check if css file was made previously & remove
           if (cssFile !== null) {
